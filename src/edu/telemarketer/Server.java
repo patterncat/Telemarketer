@@ -31,13 +31,12 @@ public class Server {
     private Logger logger = Logger.getLogger("Server");
     private InetAddress ip;
     private int port;
-    private ExecutorService executor = Executors.newFixedThreadPool(4);
+    private ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private Selector selector;
 
     public Server(InetAddress ip, int port) {
         this.ip = ip;
         this.port = port;
-
     }
 
     public static void main(String[] args) {
@@ -64,7 +63,7 @@ public class Server {
                 System.exit(1);
             }
             port = 8080;
-            System.out.println("未指定地址和端口,使用默认ip和端口...\nhttp://" + ip.getHostAddress() + ":" + port + "/");
+            System.out.println("未指定地址和端口,使用默认ip和端口..." + ip.getHostAddress() + ":" + port);
         }
 
         Server server = new Server(ip, port);
@@ -137,6 +136,7 @@ public class Server {
             logger.log(Level.SEVERE, e, () -> "初始化错误");
             System.exit(1);
         }
+        System.out.println("服务器启动 http://" + ip.getHostAddress() + ":" + port + "/");
     }
 
     private void registerServices() throws IOException {
@@ -147,8 +147,6 @@ public class Server {
         ClassLoader classLoader = ClassLoader.getSystemClassLoader();
         String name = this.getClass().getPackage().getName();
         registerFromPackage(name, packageUrl.getFile() + name.replaceAll("\\.", File.separator), classLoader);
-
-
     }
 
     private void registerFromPackage(String packageName, String packagePath, ClassLoader classLoader) {
