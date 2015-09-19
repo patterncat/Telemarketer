@@ -1,8 +1,9 @@
-package edu.telemarketer.services;
+package edu.telemarketer;
 
 import edu.telemarketer.http.responses.NotFoundResponse;
 import edu.telemarketer.http.requests.Request;
 import edu.telemarketer.http.responses.Response;
+import edu.telemarketer.services.Service;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;

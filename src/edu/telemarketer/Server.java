@@ -1,7 +1,6 @@
 package edu.telemarketer;
 
 import edu.telemarketer.http.responses.Response;
-import edu.telemarketer.services.Controller;
 import edu.telemarketer.services.Service;
 import edu.telemarketer.services.ServiceClass;
 
@@ -92,8 +91,6 @@ public class Server {
                         client.register(selector, SelectionKey.OP_READ);
                     } else if (key.isReadable()) {
                         SocketChannel client = (SocketChannel) key.channel();
-                        client.register(selector, SelectionKey.OP_WRITE);
-                        key.interestOps(SelectionKey.OP_WRITE);
                         ByteBuffer buffer = ByteBuffer.allocate(1024);
                         client.read(buffer);
                         executor.execute(new Controller(buffer, client, selector));
@@ -124,6 +121,7 @@ public class Server {
     }
 
     private void init() {
+        System.out.println("初始化中...");
         ServerSocketChannel serverChannel;
         try {
             registerServices();
