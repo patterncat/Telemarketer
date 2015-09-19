@@ -74,7 +74,7 @@ public class Server {
     private void init() {
         ServerSocketChannel serverChannel;
         try {
-            registerServices("edu.telemarketer.services.servicesimpls");
+            registerServices();
             serverChannel = ServerSocketChannel.open();
             serverChannel.bind(new InetSocketAddress(this.ip, this.port));
             serverChannel.configureBlocking(false);
@@ -86,18 +86,19 @@ public class Server {
         }
     }
 
-    private void registerServices(String pack) throws IOException {
-        String packageDirName = pack.replace('.', '/');
-        URL packageUrl = Thread.currentThread().getContextClassLoader().getResource(packageDirName);
+    private void registerServices() throws IOException {
+        URL packageUrl = this.getClass().getResource("/");
         if (packageUrl == null) {
             return;
         }
-        registerFromPackage(pack, packageUrl.getFile());
+        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+        String name = this.getClass().getPackage().getName();
+        registerFromPackage(name, packageUrl.getFile() + name.replaceAll("\\.", File.separator), classLoader);
 
 
     }
 
-    private void registerFromPackage(String packageName, String packagePath) {
+    private void registerFromPackage(String packageName, String packagePath, ClassLoader classLoader) {
         File dir = new File(packagePath);
         if (!dir.exists() || !dir.isDirectory()) {
             return;
@@ -105,11 +106,12 @@ public class Server {
         File[] dirfiles = dir.listFiles(file -> file.isDirectory() || file.getName().endsWith(".class"));
         for (File file : dirfiles) {
             if (file.isDirectory()) {
-                registerFromPackage(packageName + "." + file.getName(), file.getAbsolutePath());
+                registerFromPackage(packageName + "." + file.getName(), file.getAbsolutePath(), classLoader);
             } else {
                 String className = file.getName().substring(0, file.getName().length() - 6);
                 try {
-                    Class<?> aClass = Class.forName(packageName + "." + className);
+
+                    Class<?> aClass = classLoader.loadClass(packageName + "." + className);// class forName 会执行静态域
                     ServiceClass annotation = aClass.getAnnotation(ServiceClass.class);
                     if (annotation != null && Service.class.isAssignableFrom(aClass)) { //TODO 写注释解释这个
                         Controller.register(annotation.urlPattern(), aClass.asSubclass(Service.class).newInstance());
@@ -124,7 +126,6 @@ public class Server {
 
     public void start() {
         init();
-        int count = 0;
         while (true) {
             try {
                 selector.select();
@@ -171,11 +172,7 @@ public class Server {
                         key.channel().close();
                     } catch (IOException ignored) {
                     }
-                    count++;
                 }
-            }
-            if (count > 3) {
-                break;
             }
         }
     }

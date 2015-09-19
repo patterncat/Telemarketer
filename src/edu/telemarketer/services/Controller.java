@@ -54,15 +54,20 @@ public class Controller implements Runnable {
             logger.log(Level.WARNING, e, () -> "通道已关闭");
             return;
         }
+        Response response;
+
         if (service == null) {
-            key.attach(new NotFoundResponse());
+            response = new NotFoundResponse();
         } else {
-            Response response = service.execute(request);
+            response = service.execute(request);
             if (response == null) {
-                key.attach(new NotFoundResponse());
+                response = new NotFoundResponse();
             }
-            key.attach(response);
         }
+
+        logger.info(request.getMethod() + " \"" + request.getFilePath() + "\" " + response.getStatus().getCode());
+
+        key.attach(response);
 
     }
 

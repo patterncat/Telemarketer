@@ -78,6 +78,10 @@ public class Response {
 
     private ByteBuffer finalData = null;
 
+    public Status getStatus() {
+        return status;
+    }
+
     public ByteBuffer getByteBuffer() {
         if (finalData == null) {
             heads.put("Content-Length", String.valueOf(content.length));
