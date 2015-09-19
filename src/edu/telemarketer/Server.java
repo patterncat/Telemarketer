@@ -1,10 +1,15 @@
-package edu.telemarket;
+package edu.telemarketer;
 
-import edu.telemarket.https.Response;
+import edu.telemarketer.http.responses.Response;
+import edu.telemarketer.services.Controller;
+import edu.telemarketer.services.Service;
+import edu.telemarketer.services.ServiceClass;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -58,8 +63,8 @@ public class Server {
                 e.printStackTrace();
                 System.exit(1);
             }
-            port = 8090;
-            System.out.println("使用默认ip和端口..." + ip.getHostAddress() + ":" + port);
+            port = 8080;
+            System.out.println("未指定地址和端口,使用默认ip和端口...\nhttp://" + ip.getHostAddress() + ":" + port + "/");
         }
 
         Server server = new Server(ip, port);
@@ -69,6 +74,7 @@ public class Server {
     private void init() {
         ServerSocketChannel serverChannel;
         try {
+            registerServices("edu.telemarketer.services.servicesimpls");
             serverChannel = ServerSocketChannel.open();
             serverChannel.bind(new InetSocketAddress(this.ip, this.port));
             serverChannel.configureBlocking(false);
@@ -78,14 +84,47 @@ public class Server {
             logger.log(Level.SEVERE, e, () -> "初始化错误");
             System.exit(1);
         }
+    }
+
+    private void registerServices(String pack) throws IOException {
+        String packageDirName = pack.replace('.', '/');
+        URL packageUrl = Thread.currentThread().getContextClassLoader().getResource(packageDirName);
+        if (packageUrl == null) {
+            return;
+        }
+        registerFromPackage(pack, packageUrl.getFile());
 
 
     }
 
+    private void registerFromPackage(String packageName, String packagePath) {
+        File dir = new File(packagePath);
+        if (!dir.exists() || !dir.isDirectory()) {
+            return;
+        }
+        File[] dirfiles = dir.listFiles(file -> file.isDirectory() || file.getName().endsWith(".class"));
+        for (File file : dirfiles) {
+            if (file.isDirectory()) {
+                registerFromPackage(packageName + "." + file.getName(), file.getAbsolutePath());
+            } else {
+                String className = file.getName().substring(0, file.getName().length() - 6);
+                try {
+                    Class<?> aClass = Class.forName(packageName + "." + className);
+                    ServiceClass annotation = aClass.getAnnotation(ServiceClass.class);
+                    if (annotation != null && Service.class.isAssignableFrom(aClass)) { //TODO 写注释解释这个
+                        Controller.register(annotation.urlPattern(), aClass.asSubclass(Service.class).newInstance());
+                        System.out.println("成功注册服务: " + annotation.urlPattern() + "  " + className);
+                    }
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                    logger.log(Level.WARNING, e, () -> "注册服务出错");
+                }
+            }
+        }
+    }
 
     public void start() {
         init();
-
+        int count = 0;
         while (true) {
             try {
                 selector.select();
@@ -106,18 +145,37 @@ public class Server {
                         client.register(selector, SelectionKey.OP_READ);
                     } else if (key.isReadable()) {
                         SocketChannel client = (SocketChannel) key.channel();
+                        client.register(selector, SelectionKey.OP_WRITE);
+                        key.interestOps(SelectionKey.OP_WRITE);
                         ByteBuffer buffer = ByteBuffer.allocate(1024);
                         client.read(buffer);
-                        executor.execute(new RequestController(buffer, client, selector));
+                        executor.execute(new Controller(buffer, client, selector));
                     } else if (key.isWritable()) {
                         SocketChannel client = (SocketChannel) key.channel();
                         Response response = (Response) key.attachment();
-                        client.write(response.getByteBuffer());
+                        if (response == null) {
+                            continue;
+                        }
+                        ByteBuffer byteBuffer = response.getByteBuffer();
+                        if (byteBuffer.hasRemaining()) {
+                            client.write(byteBuffer);
+                        } else {
+                            key.cancel(); //TODO 写注释解释这个
+                            client.close();
+                        }
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
                     logger.log(Level.SEVERE, e, () -> "socket channel 出错了");
+                    key.cancel();
+                    try {
+                        key.channel().close();
+                    } catch (IOException ignored) {
+                    }
+                    count++;
                 }
+            }
+            if (count > 3) {
+                break;
             }
         }
     }

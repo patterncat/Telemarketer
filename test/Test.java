@@ -1,13 +1,10 @@
-import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.Socket;
 
 /**
  * Be careful!
@@ -16,17 +13,23 @@ import java.io.IOException;
 public class Test {
 
     public static void main(String[] args) throws IOException {
-        HttpPost httppost = new HttpPost("http://49.140.166.27:8090/");
+        Socket socket = new Socket("49.140.166.27", 8080);
+        InputStream inputStream = socket.getInputStream();
+        String head = "GET / HTTP/1.1\r\n" +
+                "Accept: */*\r\n" +
+                "Accept-Encoding: gzip, deflate\r\n" +
+                "Connection: keep-alive\r\n" +
+                "Host: 49.140.166.27:8080\r\n" +
+                "User-Agent: HTTPie/0.9.2\r\n\r\n";
+        OutputStream outputStream = socket.getOutputStream();
 
-        FileBody bin = new FileBody(new File("/Users/hason/Documents/2345_image_file_copy_3.jpg"));
+        outputStream.write(head.getBytes("utf-8"));
 
-        HttpEntity reqEntity = MultipartEntityBuilder.create().addPart("bin", bin).build();
-
-        httppost.setEntity(reqEntity);
-
-        CloseableHttpClient httpclient = HttpClients.createDefault();
-
-        httpclient.execute(httppost);
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+        String line;
+        while ((line = br.readLine()) != null) {
+            System.out.println(line);
+        }
 
     }
 }

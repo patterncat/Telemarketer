@@ -1,8 +1,10 @@
-package edu.telemarket.services;
+package edu.telemarketer.services.servicesimpls;
 
-import edu.telemarket.https.Response;
-import edu.telemarket.util.PropertiesHelper;
-import edu.telemarket.https.Request;
+import edu.telemarketer.http.responses.Response;
+import edu.telemarketer.services.Service;
+import edu.telemarketer.services.ServiceClass;
+import edu.telemarketer.util.PropertiesHelper;
+import edu.telemarketer.http.requests.Request;
 
 import java.io.File;
 import java.net.URI;
@@ -14,7 +16,8 @@ import java.util.logging.Logger;
  * Be careful!
  * Created by hason on 15/9/17.
  */
-public class FileHttpService implements Service{
+@ServiceClass(urlPattern = "^/s/.*$")
+public class FileHttpService implements Service {
     private static final Logger logger = Logger.getLogger("FileHttpService");
     private static URI staticPath;
 
@@ -33,9 +36,7 @@ public class FileHttpService implements Service{
     public Response execute(Request request) {
         String filePath = staticPath.resolve(request.getFilePath()).toString();
         File file = new File(filePath);
-        if (!file.exists()) {
 
-        }
         return null;
     }
 }

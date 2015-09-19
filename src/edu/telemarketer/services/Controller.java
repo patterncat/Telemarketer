@@ -1,9 +1,8 @@
-package edu.telemarket;
+package edu.telemarketer.services;
 
-import edu.telemarket.https.Request;
-import edu.telemarket.https.Response;
-import edu.telemarket.https.Status;
-import edu.telemarket.services.Service;
+import edu.telemarketer.http.responses.NotFoundResponse;
+import edu.telemarketer.http.requests.Request;
+import edu.telemarketer.http.responses.Response;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -19,19 +18,19 @@ import java.util.logging.Logger;
  * Be careful!
  * Created by hason on 15/9/18.
  */
-public class RequestController implements Runnable {
+public class Controller implements Runnable {
 
-    private static Logger logger = Logger.getLogger("RequestController");
+    private static Logger logger = Logger.getLogger("Controller");
     private final ByteBuffer buffer;
     private final SocketChannel channel;
     private final Selector selector;
-    private static LinkedHashMap<String, Service> views = new LinkedHashMap<>();
+    private static LinkedHashMap<String, Service> services = new LinkedHashMap<>(); //TODO 如果只读的话要变成unmodified 一直可写的话注意同步问题
 
-    public static void regist(String pattern, Service service) {
-        views.put(pattern, service);
+    public static void register(String pattern, Service service) {
+        services.put(pattern, service);
     }
 
-    public RequestController(ByteBuffer buffer, SocketChannel client, Selector selector) {
+    public Controller(ByteBuffer buffer, SocketChannel client, Selector selector) {
         this.buffer = buffer;
         this.channel = client;
         this.selector = selector;
@@ -41,7 +40,7 @@ public class RequestController implements Runnable {
     public void run() {
         Request request = getRequestFromBuffer(buffer);
         Service service = null;
-        for (Map.Entry<String, Service> entry : views.entrySet()) {
+        for (Map.Entry<String, Service> entry : services.entrySet()) {
             if (request.getFilePath().matches(entry.getKey())) {
                 service = entry.getValue();
                 break;
@@ -52,19 +51,17 @@ public class RequestController implements Runnable {
         try {
             key = channel.register(selector, SelectionKey.OP_WRITE);
         } catch (ClosedChannelException e) {
-            e.printStackTrace();
             logger.log(Level.WARNING, e, () -> "通道已关闭");
             return;
         }
         if (service == null) {
-            key.attach(new Response(Status.NOT_FOUND_404));
+            key.attach(new NotFoundResponse());
         } else {
             Response response = service.execute(request);
             if (response == null) {
-                key.attach(new Response(Status.NOT_FOUND_404));
+                key.attach(new NotFoundResponse());
             }
             key.attach(response);
-
         }
 
     }
@@ -75,22 +72,24 @@ public class RequestController implements Runnable {
         int remaining = buffer.remaining();
         byte[] bytes = new byte[remaining];
         buffer.get(bytes);
-        int i = 0;
-        for (; i < remaining; i++) {
+        int position = 0;
+        for (int i = 0; i < remaining; i++) {
             if (bytes[i] == '\r' && bytes[i + 1] == '\n') {
+                position = i;
                 i += 2;
             }
             if (bytes[i] == '\r' && bytes[i + 1] == '\n') {
                 break;
-            } else {
-                i += 2;
             }
         }
-        System.out.println(new String(bytes));
-        byte[] head = new byte[i];
-        byte[] body = new byte[remaining - i];
-        buffer.get(head, 0, i);
-        buffer.get(body, i, remaining);
+        buffer.rewind();
+        byte[] head = new byte[position];
+        buffer.get(head, 0, position);
+        byte[] body = null;
+        if (remaining - position > 4) {
+            body = new byte[remaining - position + 4];
+            buffer.get(body, 0, remaining - position + 4);
+        }
         return Request.createFromBytes(head, body);
     }
 }

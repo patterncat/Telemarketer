@@ -1,10 +1,9 @@
-package edu.telemarket.https;
+package edu.telemarketer.http.requests;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -30,6 +29,7 @@ public class Request {
         this.head = head;
         this.path = path;
         this.method = method;
+
     }
 
 
@@ -60,11 +60,9 @@ public class Request {
             logger.log(Level.SEVERE, e, () -> "请求解析有错误");
             throw new IllegalStateException(e);
         }
-        return new Request(headMap, Arrays.copyOf(body, body.length), path, method);
+        return new Request(headMap, body, path, method);
 
     }
-
-
 
 
     public String getField(String field) {
@@ -72,10 +70,14 @@ public class Request {
     }
 
     public String getFilePath() {
-        return head.get("path");
+        return path;
+    }
+
+    public byte[] getMessageBody() {
+        return messageBody;
     }
 
     public String getMethod() {
-        return head.get("method");
+        return method;
     }
 }

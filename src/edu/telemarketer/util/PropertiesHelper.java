@@ -1,4 +1,4 @@
-package edu.telemarket.util;
+package edu.telemarketer.util;
 
 import java.io.FileInputStream;
 import java.io.IOException;
