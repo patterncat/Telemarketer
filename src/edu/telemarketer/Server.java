@@ -71,59 +71,6 @@ public class Server {
         server.start();
     }
 
-    private void init() {
-        ServerSocketChannel serverChannel;
-        try {
-            registerServices();
-            serverChannel = ServerSocketChannel.open();
-            serverChannel.bind(new InetSocketAddress(this.ip, this.port));
-            serverChannel.configureBlocking(false);
-            selector = Selector.open();
-            serverChannel.register(selector, SelectionKey.OP_ACCEPT);
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, e, () -> "初始化错误");
-            System.exit(1);
-        }
-    }
-
-    private void registerServices() throws IOException {
-        URL packageUrl = this.getClass().getResource("/");
-        if (packageUrl == null) {
-            return;
-        }
-        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
-        String name = this.getClass().getPackage().getName();
-        registerFromPackage(name, packageUrl.getFile() + name.replaceAll("\\.", File.separator), classLoader);
-
-
-    }
-
-    private void registerFromPackage(String packageName, String packagePath, ClassLoader classLoader) {
-        File dir = new File(packagePath);
-        if (!dir.exists() || !dir.isDirectory()) {
-            return;
-        }
-        File[] dirfiles = dir.listFiles(file -> file.isDirectory() || file.getName().endsWith(".class"));
-        for (File file : dirfiles) {
-            if (file.isDirectory()) {
-                registerFromPackage(packageName + "." + file.getName(), file.getAbsolutePath(), classLoader);
-            } else {
-                String className = file.getName().substring(0, file.getName().length() - 6);
-                try {
-
-                    Class<?> aClass = classLoader.loadClass(packageName + "." + className);// class forName 会执行静态域
-                    ServiceClass annotation = aClass.getAnnotation(ServiceClass.class);
-                    if (annotation != null && Service.class.isAssignableFrom(aClass)) { //TODO 写注释解释这个
-                        Controller.register(annotation.urlPattern(), aClass.asSubclass(Service.class).newInstance());
-                        System.out.println("成功注册服务: " + annotation.urlPattern() + "  " + className);
-                    }
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                    logger.log(Level.WARNING, e, () -> "注册服务出错");
-                }
-            }
-        }
-    }
-
     public void start() {
         init();
         while (true) {
@@ -172,6 +119,59 @@ public class Server {
                         key.channel().close();
                     } catch (IOException ignored) {
                     }
+                }
+            }
+        }
+    }
+
+    private void init() {
+        ServerSocketChannel serverChannel;
+        try {
+            registerServices();
+            serverChannel = ServerSocketChannel.open();
+            serverChannel.bind(new InetSocketAddress(this.ip, this.port));
+            serverChannel.configureBlocking(false);
+            selector = Selector.open();
+            serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, e, () -> "初始化错误");
+            System.exit(1);
+        }
+    }
+
+    private void registerServices() throws IOException {
+        URL packageUrl = this.getClass().getResource("/");
+        if (packageUrl == null) {
+            return;
+        }
+        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+        String name = this.getClass().getPackage().getName();
+        registerFromPackage(name, packageUrl.getFile() + name.replaceAll("\\.", File.separator), classLoader);
+
+
+    }
+
+    private void registerFromPackage(String packageName, String packagePath, ClassLoader classLoader) {
+        File dir = new File(packagePath);
+        if (!dir.exists() || !dir.isDirectory()) {
+            return;
+        }
+        File[] dirfiles = dir.listFiles(file -> file.isDirectory() || file.getName().endsWith(".class"));
+        for (File file : dirfiles) {
+            if (file.isDirectory()) {
+                registerFromPackage(packageName + "." + file.getName(), file.getAbsolutePath(), classLoader);
+            } else {
+                String className = file.getName().substring(0, file.getName().length() - 6);
+                try {
+
+                    Class<?> aClass = classLoader.loadClass(packageName + "." + className);// class forName 会执行静态域
+                    ServiceClass annotation = aClass.getAnnotation(ServiceClass.class);
+                    if (annotation != null && Service.class.isAssignableFrom(aClass)) { //TODO 写注释解释这个
+                        Controller.register(annotation.urlPattern(), aClass.asSubclass(Service.class).newInstance());
+                        System.out.println("成功注册服务: " + annotation.urlPattern() + "  " + className);
+                    }
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                    logger.log(Level.WARNING, e, () -> "注册服务出错");
                 }
             }
         }
