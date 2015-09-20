@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -49,7 +50,7 @@ public class Request {
         String method;
         try {
             String[] lineOne = reader.readLine().split("\\s");
-            path = lineOne[1];
+            path = URLDecoder.decode(lineOne[1], "utf-8");
             method = lineOne[0];
             String line;
             while ((line = reader.readLine()) != null) {
@@ -67,13 +68,13 @@ public class Request {
         String[] pathPart = path.split("\\?");
         path = pathPart[0];
         if (pathPart.length == 2) {
-            requestParameters.putAll(parseParameters(pathPart[1]));
+            parseParameters(pathPart[1], requestParameters);
         }
 
         if (headMap.containsKey("Content-Type") && headMap.get("Content-Type").contains("application/x-www-form-urlencoded")) {
             try {
                 String bodyMsg = new String(body, "utf-8");
-                requestParameters.putAll(parseParameters(bodyMsg));
+                parseParameters(bodyMsg, requestParameters);
             } catch (UnsupportedEncodingException e) {
                 logger.log(Level.SEVERE, "基本不可能出现的错误 编码方法不支持");
             }
@@ -109,14 +110,12 @@ public class Request {
         return parseFromBytes(head, body);
     }
 
-    private static Map<String, String> parseParameters(String s) {
-        Map<String, String> requestParameters = new HashMap<>();
+    private static void parseParameters(String s, Map<String, String> requestParameters) {
         String[] paras = s.split("&");
         for (String para : paras) {
             String[] split = para.split("=");
             requestParameters.put(split[0], split[1]);
         }
-        return requestParameters;
     }
 
     public boolean containParameter(String key) {

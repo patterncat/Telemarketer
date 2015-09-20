@@ -25,7 +25,7 @@ public class Controller implements Runnable {
     private final ByteBuffer buffer;
     private final SocketChannel channel;
     private final Selector selector;
-    private static Map<String, Service> services = new LinkedHashMap<>(); //TODO 如果只读的话要变成unmodified 一直可写的话注意同步问题
+    private static Map<String, Service> services = new LinkedHashMap<>(); //TODO 一直可写的话注意同步问题
 
     public static void register(String pattern, Service service) {
         services.put(pattern, service);
