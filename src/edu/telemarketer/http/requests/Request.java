@@ -82,7 +82,9 @@ public class Request {
     }
 
     public static Request parseFromBuffer(ByteBuffer buffer) {
-        buffer.flip();
+        if (buffer.position() != 0) {
+            buffer.flip();
+        }
         int remaining = buffer.remaining();
         byte[] bytes = new byte[remaining];
         buffer.get(bytes);
