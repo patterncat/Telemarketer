@@ -39,7 +39,7 @@ public class Response {
         content = new byte[0];
         heads.put("Date", simpleDateFormat.format(new Date()));
         heads.put("Server", PropertiesHelper.getProperty("server_name", "Telemarketer"));
-        heads.put("Connection", "Keep-Alive");
+        heads.put("Connection", "Close");
     }
 
     public Response(Status status, String json) {
@@ -51,13 +51,13 @@ public class Response {
         }
     }
 
-    public Response(Status status, File html) {
+    public Response(Status status, File file) {
         this(status);
-        if (!html.isFile() && html.canRead() && html.getName().endsWith("html")) {
+        if (!file.isFile() && file.canRead() && file.getName().endsWith("file")) {
             this.status = Status.NOT_FOUND_404;
             return;
         }
-        String path = html.getAbsolutePath();
+        String path = file.getAbsolutePath();
         String contentType = URLConnection.getFileNameMap().getContentTypeFor(path);
         try {
             content = Files.readAllBytes(FileSystems.getDefault().getPath(path));
@@ -65,7 +65,10 @@ public class Response {
             this.status = Status.NOT_FOUND_404;
             return;
         }
-        heads.put("Content-Type", contentType + "; charset=" + charset);
+        if (contentType.startsWith("text")) {
+            contentType += "; charset=" + charset;
+        }
+        heads.put("Content-Type", contentType);
     }
 
     public void setHead(String key, String value) {

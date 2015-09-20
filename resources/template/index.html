@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>基于本体的图像搜索引擎</title>
+    <style>
+        .container {
+            width: 100%;
+            margin-top: 100px;
+        }
+
+        .logo {
+            text-align: center;
+        }
+
+        .search {
+            margin: 30px auto;
+            width: 650px;
+            height: 33px;
+        }
+
+        .sear {
+            width: 550px;
+            height: 33px;
+            border: 1px solid lightblue;
+            float: left;
+        }
+
+        .sear:hover {
+            border: 1px solid blue;
+        }
+
+        .change {
+            border: 1px solid blue;
+        }
+
+        .btn {
+            float: left;
+            margin-left: 15px;
+        }
+
+        .btn button {
+
+            height: 35px;
+            width: 80px;
+        }
+
+        .photo {
+            float: right;
+            padding: 3px;
+        }
+
+        .board {
+            float: left;
+
+        }
+
+        .board input {
+            width: 480px;
+            height: 25px;
+            border: none;
+            outline: none;
+            margin-top: 3px;
+            margin-left: 15px;
+            font-size: 18px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo">
+        <img src="/s/google.png" height="92" width="272" alt=""/>
+    </div>
+    <div class="search">
+        <form action="">
+            <div id="sear" class="sear">
+                <div class="photo">
+                    <img src="/s/photo.jpg" height="25" width="30" alt=""/>
+                </div>
+                <div class="board">
+                    <input type="text"/>
+                </div>
+            </div>
+
+            <div class="btn">
+                <button type="submit">
+                    <img src="/s/search.png" height="23" width="23" alt=""/>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+</body>
+</html>
+<script>
+
+    var s = document.getElementById('sear');
+    document.body.onclick = function () {
+        if (s.className.indexOf('change') > -1) {
+            s.className = s.className.replace('change', '')
+        }
+    };
+    s.onclick = function (event) {
+        var i = document.getElementById('sear');
+        if (i.className.indexOf('change') < 0) {
+            i.className += ' change';
+        }
+        stopPro(event);
+    };
+    function stopPro(evt) {
+        var e = evt || window.event;
+        window.event ? e.cancelBubble = true : e.stopPropagation();
+    }
+
+
+</script>

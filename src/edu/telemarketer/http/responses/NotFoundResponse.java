@@ -14,7 +14,7 @@ public class NotFoundResponse extends Response {
     private static final File PATH_404HTML;
 
     static {
-        PATH_404HTML = new File(PropertiesHelper.getProperty("404html_path", ClassLoader.getSystemResource("404.html").toString()));
+        PATH_404HTML = new File(PropertiesHelper.getProperty("404html_path", PropertiesHelper.getResourcePath("template/404.html")));
     }
 
     public NotFoundResponse() {

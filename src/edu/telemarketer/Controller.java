@@ -5,6 +5,7 @@ import edu.telemarketer.http.requests.Request;
 import edu.telemarketer.http.responses.Response;
 import edu.telemarketer.services.Service;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
@@ -46,7 +47,6 @@ public class Controller implements Runnable {
                 service = entry.getValue();
                 break;
             }
-
         }
         SelectionKey key;
         try {
@@ -65,15 +65,12 @@ public class Controller implements Runnable {
                 response = new NotFoundResponse();
             }
         }
-
         logger.info(request.getMethod() + " \"" + request.getFilePath() + "\" " + response.getStatus().getCode());
-
         key.attach(response);
-
     }
 
 
-    public static Request getRequestFromBuffer(ByteBuffer buffer) {
+    private static Request getRequestFromBuffer(ByteBuffer buffer) {
         buffer.flip();
         int remaining = buffer.remaining();
         byte[] bytes = new byte[remaining];

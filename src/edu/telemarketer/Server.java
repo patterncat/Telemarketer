@@ -5,6 +5,7 @@ import edu.telemarketer.services.Service;
 import edu.telemarketer.services.ServiceClass;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -27,6 +28,9 @@ import java.util.logging.Logger;
  * Created by hason on 15/9/17.
  */
 public class Server {
+    public static final int TIMEOUT = 500;
+    public static final int READ_CAPACITY = 4096;
+    public static final int DEFAULT_PORT = 8080;
     private Logger logger = Logger.getLogger("Server");
     private InetAddress ip;
     private int port;
@@ -44,25 +48,20 @@ public class Server {
             System.exit(1);
         }
         InetAddress ip = null;
-        int port;
-        if (args.length == 2 && args[1].matches(".+:\\d+")) {
-            String[] address = args[1].split(":");
-            try {
+        int port = 0;
+        try {
+            if (args.length == 2 && args[1].matches(".+:\\d+")) {
+                String[] address = args[1].split(":");
                 ip = InetAddress.getByName(address[0]);
-            } catch (UnknownHostException e) {
-                System.out.println("请输入正确的ip");
-                System.exit(1);
-            }
-            port = Integer.valueOf(address[1]);
-        } else {
-            try {
+                port = Integer.valueOf(address[1]);
+            } else {
                 ip = InetAddress.getLocalHost();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-                System.exit(1);
+                port = DEFAULT_PORT;
+                System.out.println("未指定地址和端口,使用默认ip和端口..." + ip.getHostAddress() + ":" + port);
             }
-            port = 8080;
-            System.out.println("未指定地址和端口,使用默认ip和端口..." + ip.getHostAddress() + ":" + port);
+        } catch (UnknownHostException e) {
+            System.out.println("请输入正确的ip");
+            System.exit(1);
         }
 
         Server server = new Server(ip, port);
@@ -73,7 +72,9 @@ public class Server {
         init();
         while (true) {
             try {
-                selector.select();
+                if (selector.select(TIMEOUT) == 0) {
+                    continue;
+                }
             } catch (IOException e) {
                 logger.log(Level.SEVERE, e, () -> "selector错误");
                 break;
@@ -89,11 +90,6 @@ public class Server {
                         SocketChannel client = serverSocket.accept();
                         client.configureBlocking(false);
                         client.register(selector, SelectionKey.OP_READ);
-                    } else if (key.isReadable()) {
-                        SocketChannel client = (SocketChannel) key.channel();
-                        ByteBuffer buffer = ByteBuffer.allocate(1024);
-                        client.read(buffer);
-                        executor.execute(new Controller(buffer, client, selector));
                     } else if (key.isWritable()) {
                         SocketChannel client = (SocketChannel) key.channel();
                         Response response = (Response) key.attachment();
@@ -103,10 +99,17 @@ public class Server {
                         ByteBuffer byteBuffer = response.getByteBuffer();
                         if (byteBuffer.hasRemaining()) {
                             client.write(byteBuffer);
-                        } else {
-                            key.cancel(); //TODO 写注释解释这个
+                        }
+
+                        if (!byteBuffer.hasRemaining()) {
+                            key.cancel();
                             client.close();
                         }
+                    } else if (key.isReadable()) {
+                        SocketChannel client = (SocketChannel) key.channel();
+                        ByteBuffer buffer = ByteBuffer.allocate(READ_CAPACITY);
+                        client.read(buffer);
+                        executor.execute(new Controller(buffer, client, selector));
                     }
                 } catch (IOException e) {
                     logger.log(Level.SEVERE, e, () -> "socket channel 出错了");
@@ -138,31 +141,30 @@ public class Server {
     }
 
     private void registerServices() throws IOException {
-        URL packageUrl = this.getClass().getResource("/");
+        URL packageUrl = Server.class.getResource("/");
         if (packageUrl == null) {
             return;
         }
         ClassLoader classLoader = ClassLoader.getSystemClassLoader();
         String name = this.getClass().getPackage().getName();
-        registerFromPackage(name, packageUrl.getFile() + name.replaceAll("\\.", File.separator), classLoader);
+        registerFromPackage(name, packageUrl.getFile() + name.replaceAll("\\.", File.separator), classLoader, file -> file.isDirectory() || file.getName().endsWith(".class"));
     }
 
-    private void registerFromPackage(String packageName, String packagePath, ClassLoader classLoader) {
+    private void registerFromPackage(String packageName, String packagePath, ClassLoader classLoader, FileFilter fileFilter) {
         File dir = new File(packagePath);
         if (!dir.exists() || !dir.isDirectory()) {
             return;
         }
-        File[] dirfiles = dir.listFiles(file -> file.isDirectory() || file.getName().endsWith(".class"));
+        File[] dirfiles = dir.listFiles(fileFilter);
         for (File file : dirfiles) {
             if (file.isDirectory()) {
-                registerFromPackage(packageName + "." + file.getName(), file.getAbsolutePath(), classLoader);
+                registerFromPackage(packageName + "." + file.getName(), file.getAbsolutePath(), classLoader, fileFilter);
             } else {
                 String className = file.getName().substring(0, file.getName().length() - 6);
                 try {
-
                     Class<?> aClass = classLoader.loadClass(packageName + "." + className);// class forName 会执行静态域
                     ServiceClass annotation = aClass.getAnnotation(ServiceClass.class);
-                    if (annotation != null && Service.class.isAssignableFrom(aClass)) { //TODO 写注释解释这个
+                    if (annotation != null && Service.class.isAssignableFrom(aClass)) {
                         Controller.register(annotation.urlPattern(), aClass.asSubclass(Service.class).newInstance());
                         System.out.println("成功注册服务: " + annotation.urlPattern() + "  " + className);
                     }
