@@ -1,9 +1,12 @@
 package edu.telemarketer;
 
-import edu.telemarketer.http.requests.IllegalRequestException;
+import edu.telemarketer.http.Status;
+import edu.telemarketer.http.exceptions.IllegalRequestException;
+import edu.telemarketer.http.exceptions.ServerInternalException;
 import edu.telemarketer.http.responses.NotFoundResponse;
 import edu.telemarketer.http.requests.Request;
 import edu.telemarketer.http.responses.Response;
+import edu.telemarketer.http.responses.ServerInternalResponse;
 import edu.telemarketer.services.Service;
 
 import java.nio.ByteBuffer;
@@ -44,15 +47,11 @@ public class Controller implements Runnable {
         try {
             request = Request.parseFromBuffer(buffer);
         } catch (IllegalRequestException e) {
-            SelectionKey key;
-            try {
-                key = channel.register(selector, SelectionKey.OP_WRITE);
-            } catch (ClosedChannelException e1) {
-                return;
-            }
-            key.attach(new NotFoundResponse());
+            logger.log(Level.WARNING, e, () -> "请求有错误");
+            attachResponse(new Response(Status.BAD_REQUEST_400));
             return;
         }
+
         Service service = null;
         for (Map.Entry<String, Service> entry : services.entrySet()) {
             if (request.getFilePath().matches(entry.getKey())) {
@@ -61,26 +60,33 @@ public class Controller implements Runnable {
             }
         }
 
-
-        SelectionKey key;
-        try {
-            key = channel.register(selector, SelectionKey.OP_WRITE);
-        } catch (ClosedChannelException e) {
-            logger.log(Level.WARNING, e, () -> "通道已关闭");
-            return;
-        }
         Response response;
-
         if (service == null) {
             response = new NotFoundResponse();
         } else {
-            response = service.execute(request);
-            if (response == null) {
-                response = new NotFoundResponse();
+            try {
+                response = service.execute(request);
+                if (response == null) {
+                    response = new NotFoundResponse();
+                }
+            } catch (ServerInternalException e) {
+                logger.log(Level.SEVERE, e, () -> "服务器内部错误");
+                attachResponse(new ServerInternalResponse());
+                return;
             }
         }
+        attachResponse(response);
         logger.info(request.getMethod() + " \"" + request.getFilePath() + "\" " + response.getStatus().getCode());
-        key.attach(response);
+
+    }
+
+    private void attachResponse(Response response) {
+        try {
+            SelectionKey key = channel.register(selector, SelectionKey.OP_WRITE);
+            key.attach(response);
+        } catch (ClosedChannelException e) {
+            logger.log(Level.WARNING, e, () -> "通道已关闭");
+        }
     }
 
 

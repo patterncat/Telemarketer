@@ -9,7 +9,7 @@ import java.io.File;
  * Be careful!
  * Created by hason on 15/9/19.
  */
-public class NotFoundResponse extends Response {
+public class NotFoundResponse extends FileResponse {
 
     private static final File PATH_404HTML;
 

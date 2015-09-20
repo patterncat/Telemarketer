@@ -24,6 +24,9 @@ cd到目录下
 `java edu/telemarketer/Server start [address:port]`
 
 ##编写自己的服务
-继承Service接口,并用 `@ServiceClass(urlPattern = "...")` 标注。
+继承Service接口,并用 `@InService(urlPattern = "...")` 标注。
 
 字符串里写入对应路径的正则。会自动扫描并注册服务。
+
+##编写自己的Response
+继承Response

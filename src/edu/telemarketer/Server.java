@@ -2,7 +2,7 @@ package edu.telemarketer;
 
 import edu.telemarketer.http.responses.Response;
 import edu.telemarketer.services.Service;
-import edu.telemarketer.services.ServiceClass;
+import edu.telemarketer.services.InService;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -24,10 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
-/**
- * Be careful!
- * Created by hason on 15/9/17.
- */
+
 public class Server {
     public static final int TIMEOUT = 500;
     public static final int READ_CAPACITY = 4096;
@@ -164,7 +161,7 @@ public class Server {
                 String className = file.getName().substring(0, file.getName().length() - 6);
                 try {
                     Class<?> aClass = classLoader.loadClass(packageName + "." + className);// class forName 会执行静态域
-                    ServiceClass annotation = aClass.getAnnotation(ServiceClass.class);
+                    InService annotation = aClass.getAnnotation(InService.class);
                     if (annotation != null && Service.class.isAssignableFrom(aClass)) {
                         Controller.register(annotation.urlPattern(), aClass.asSubclass(Service.class).newInstance());
                         System.out.println("成功注册服务: " + annotation.urlPattern() + "  " + className);
