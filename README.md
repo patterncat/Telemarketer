@@ -23,6 +23,9 @@ cd到目录下
 
 `java edu/telemarketer/Server start [address:port]`
 
+##运行示例
+![示例](https://raw.githubusercontent.com/csdbianhua/Telemarketer/master/resources/images/example.png)
+
 ##编写自己的服务
 继承Service接口,并用 `@InService(urlPattern = "...")` 标注。
 
