@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -35,7 +36,7 @@ public class Request {
     }
 
 
-    public static Request createFromBytes(byte[] head, byte[] body) {
+    public static Request parseFromBytes(byte[] head, byte[] body) {
         BufferedReader reader;
         LinkedHashMap<String, String> headMap = new LinkedHashMap<>();
         try {
@@ -78,6 +79,32 @@ public class Request {
             }
         }
         return new Request(headMap, body, path, method, requestParameters);
+    }
+
+    public static Request parseFromBuffer(ByteBuffer buffer) {
+        buffer.flip();
+        int remaining = buffer.remaining();
+        byte[] bytes = new byte[remaining];
+        buffer.get(bytes);
+        int position = 0;
+        for (int i = 0; i < remaining; i++) {
+            if (bytes[i] == '\r' && bytes[i + 1] == '\n') {
+                position = i;
+                i += 2;
+            }
+            if (i + 1 < remaining && bytes[i] == '\r' && bytes[i + 1] == '\n') {
+                break;
+            }
+        }
+        buffer.rewind();
+        byte[] head = new byte[position];
+        buffer.get(head, 0, position);
+        byte[] body = null;
+        if (remaining - position > 4) {
+            body = new byte[remaining - position + 4];
+            buffer.get(body, 0, remaining - position + 4);
+        }
+        return parseFromBytes(head, body);
     }
 
     private static Map<String, String> parseParameters(String s) {
