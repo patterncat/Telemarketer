@@ -6,12 +6,12 @@ Telemarketer 是一个简单的web服务器,同时也提供了一个简单的Web
 
 	-Telemarket
 		-edu
-		-telemarketer
-			+http
-			+services
-			+util
-			 Controller.class
-			 Server.class
+			-telemarketer
+				+http
+				+services
+				+util
+			 	Controller.class
+			 	Server.class
 		-images
 			...
 		-template
