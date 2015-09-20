@@ -21,10 +21,10 @@ import java.util.logging.Logger;
  */
 public class Response {
 
+    private static final String HTTP_VERSION = "HTTP/1.1";
     private static Logger logger = Logger.getLogger("Response");
     private static final String charset = "utf-8";
     private final static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss zzz", Locale.ENGLISH);
-
     static {
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
@@ -89,7 +89,7 @@ public class Response {
         if (finalData == null) {
             heads.put("Content-Length", String.valueOf(content.length));
             StringBuilder sb = new StringBuilder();
-            sb.append("HTTP/1.1 ").append(status.getCode()).append(" ").append(status.getMessage()).append("\r\n");
+            sb.append(HTTP_VERSION).append(" ").append(status.getCode()).append(" ").append(status.getMessage()).append("\r\n");
             for (Map.Entry<String, String> entry : heads.entrySet()) {
                 sb.append(entry.getKey()).append(": ").append(entry.getValue()).append("\r\n");
             }

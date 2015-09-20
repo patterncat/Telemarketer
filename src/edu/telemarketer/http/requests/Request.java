@@ -104,8 +104,9 @@ public class Request {
         buffer.get(head, 0, position);
         byte[] body = null;
         if (remaining - position > 4) {
+            buffer.position(position + 4);
             body = new byte[remaining - position - 4];
-            buffer.get(body, 4, remaining - position - 4);
+            buffer.get(body, 0, remaining - position - 4);
         }
         return parseFromBytes(head, body);
     }
