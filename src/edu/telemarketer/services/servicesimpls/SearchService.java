@@ -15,9 +15,12 @@ import java.io.File;
  */
 
 @ServiceClass(urlPattern = "^/$")
-public class IndexService implements Service {
+public class SearchService implements Service {
     @Override
     public Response execute(Request request) {
-        return new Response(Status.SUCCESS_200, PropertiesHelper.getTemplateFile("index.html"));
+        if (!request.containParameter("word")) {
+            return new Response(Status.SUCCESS_200, PropertiesHelper.getTemplateFile("index.html"));
+        }
+        return new Response(Status.SUCCESS_200, PropertiesHelper.getTemplateFile("search.html"));
     }
 }

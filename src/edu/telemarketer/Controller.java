@@ -1,5 +1,6 @@
 package edu.telemarketer;
 
+import edu.telemarketer.http.requests.IllegalRequestException;
 import edu.telemarketer.http.responses.NotFoundResponse;
 import edu.telemarketer.http.requests.Request;
 import edu.telemarketer.http.responses.Response;
@@ -39,7 +40,19 @@ public class Controller implements Runnable {
 
     @Override
     public void run() {
-        Request request = Request.parseFromBuffer(buffer);
+        Request request;
+        try {
+            request = Request.parseFromBuffer(buffer);
+        } catch (IllegalRequestException e) {
+            SelectionKey key;
+            try {
+                key = channel.register(selector, SelectionKey.OP_WRITE);
+            } catch (ClosedChannelException e1) {
+                return;
+            }
+            key.attach(new NotFoundResponse());
+            return;
+        }
         Service service = null;
         for (Map.Entry<String, Service> entry : services.entrySet()) {
             if (request.getFilePath().matches(entry.getKey())) {
@@ -47,6 +60,8 @@ public class Controller implements Runnable {
                 break;
             }
         }
+
+
         SelectionKey key;
         try {
             key = channel.register(selector, SelectionKey.OP_WRITE);

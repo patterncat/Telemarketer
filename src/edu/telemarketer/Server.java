@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 
 /**
  * Be careful!
@@ -147,7 +148,7 @@ public class Server {
         }
         ClassLoader classLoader = ClassLoader.getSystemClassLoader();
         String name = this.getClass().getPackage().getName();
-        registerFromPackage(name, packageUrl.getFile() + name.replaceAll("\\.", File.separator), classLoader, file -> file.isDirectory() || file.getName().endsWith(".class"));
+        registerFromPackage(name, packageUrl.getFile() + name.replaceAll("\\.", Matcher.quoteReplacement(File.separator)), classLoader, file -> file.isDirectory() || file.getName().endsWith(".class"));
     }
 
     private void registerFromPackage(String packageName, String packagePath, ClassLoader classLoader, FileFilter fileFilter) {

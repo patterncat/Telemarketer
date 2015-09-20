@@ -23,7 +23,7 @@ public class Response {
 
     private static final String HTTP_VERSION = "HTTP/1.1";
     private static Logger logger = Logger.getLogger("Response");
-    private static final String charset = "utf-8";
+    private static final String CHARSET = "utf-8";
     private final static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss zzz", Locale.ENGLISH);
     static {
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -44,9 +44,9 @@ public class Response {
 
     public Response(Status status, String json) {
         this(status);
-        heads.put("Content-Type", "application/json; charset=" + charset);
+        heads.put("Content-Type", "application/json; charset=" + CHARSET);
         try {
-            this.content = json.getBytes(charset);
+            this.content = json.getBytes(CHARSET);
         } catch (UnsupportedEncodingException ignore) {
         }
     }
@@ -66,7 +66,7 @@ public class Response {
             return;
         }
         if (contentType.startsWith("text")) {
-            contentType += "; charset=" + charset;
+            contentType += "; charset=" + CHARSET;
         }
         heads.put("Content-Type", contentType);
     }
@@ -79,12 +79,12 @@ public class Response {
         return heads.get(key);
     }
 
-    private ByteBuffer finalData = null;
+
 
     public Status getStatus() {
         return status;
     }
-
+    private ByteBuffer finalData = null;
     public ByteBuffer getByteBuffer() {
         if (finalData == null) {
             heads.put("Content-Length", String.valueOf(content.length));
@@ -96,10 +96,10 @@ public class Response {
             sb.append("\r\n");
             byte[] head;
             try {
-                head = sb.toString().getBytes(charset);
+                head = sb.toString().getBytes(CHARSET);
             } catch (UnsupportedEncodingException ignore) {
-                logger.log(Level.SEVERE, "amazing,不支持编码" + charset);
-                throw new IllegalStateException("amazing,不支持编码" + charset);
+                logger.log(Level.SEVERE, "amazing,不支持编码" + CHARSET);
+                throw new IllegalStateException("amazing,不支持编码" + CHARSET);
             }
             finalData = ByteBuffer.allocate(head.length + content.length + 2);
             finalData.put(head);

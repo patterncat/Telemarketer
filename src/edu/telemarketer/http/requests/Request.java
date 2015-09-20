@@ -1,5 +1,7 @@
 package edu.telemarketer.http.requests;
 
+import edu.telemarketer.http.responses.NotFoundResponse;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -37,7 +39,7 @@ public class Request {
     }
 
 
-    public static Request parseFromBytes(byte[] head, byte[] body) {
+    public static Request parseFromBytes(byte[] head, byte[] body) throws IllegalRequestException {
         BufferedReader reader;
         LinkedHashMap<String, String> headMap = new LinkedHashMap<>();
         try {
@@ -49,10 +51,13 @@ public class Request {
         String path;
         String method;
         try {
-            String[] lineOne = reader.readLine().split("\\s");
+            String line = reader.readLine();
+            if (line == null) {
+                throw new IllegalRequestException();
+            }
+            String[] lineOne = line.split("\\s");
             path = URLDecoder.decode(lineOne[1], "utf-8");
             method = lineOne[0];
-            String line;
             while ((line = reader.readLine()) != null) {
                 if (line.equals("")) {
                     break;
@@ -82,7 +87,7 @@ public class Request {
         return new Request(headMap, body, path, method, requestParameters);
     }
 
-    public static Request parseFromBuffer(ByteBuffer buffer) {
+    public static Request parseFromBuffer(ByteBuffer buffer) throws IllegalRequestException {
         if (buffer.position() != 0) {
             buffer.flip();
         }

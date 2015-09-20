@@ -1,66 +1,62 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>基于本体的图像搜索引擎</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>基于本体的图像检索系统</title>
     <style>
-        .container {
-            width: 100%;
-            margin-top: 100px;
+        *{
+            margin:0;
+            padding:0;
         }
-
-        .logo {
+        body{
+            height:100vh;
+        }
+        .container{
+            width:100%;
+            padding-top: 100px;
+        }
+        .logo{
             text-align: center;
         }
-
-        .search {
+        .search{
             margin: 30px auto;
-            width: 650px;
-            height: 33px;
+            width:650px;
+            height:33px;
         }
-
-        .sear {
-            width: 550px;
-            height: 33px;
+        .sear{
+            width:550px;
+            height:33px;
             border: 1px solid lightblue;
-            float: left;
+            float:left;
         }
-
-        .sear:hover {
+        .sear:hover{
             border: 1px solid blue;
         }
-
-        .change {
+        .change{
             border: 1px solid blue;
         }
-
-        .btn {
-            float: left;
+        .btn{
+            float:left;
             margin-left: 15px;
         }
+        .btn button{
 
-        .btn button {
-
-            height: 35px;
-            width: 80px;
+            height:35px;
+            width:80px;
         }
-
-        .photo {
+        .photo{
             float: right;
-            padding: 3px;
+            padding:3px;
         }
-
-        .board {
+        .board{
             float: left;
 
         }
-
-        .board input {
+        .board input{
             width: 480px;
-            height: 25px;
-            border: none;
-            outline: none;
+            height:25px;
+            border:none;
+            outline:none;
             margin-top: 3px;
             margin-left: 15px;
             font-size: 18px;
@@ -72,22 +68,22 @@
 
 <div class="container">
     <div class="logo">
-        <img src="/s/google.png" height="92" width="272" alt=""/>
+        <img src="/s/google.png" height="92" width="272" alt="" />
     </div>
     <div class="search">
         <form action="">
             <div id="sear" class="sear">
                 <div class="photo">
-                    <img src="/s/photo.jpg" height="25" width="30" alt=""/>
+                    <img src="/s/photo.jpg" height="25" width="30" alt="" />
                 </div>
                 <div class="board">
-                    <input type="text"/>
+                    <input type="text" />
                 </div>
             </div>
 
             <div class="btn">
-                <button type="submit">
-                    <img src="/s/search.png" height="23" width="23" alt=""/>
+                <button type="submit" >
+                    <img src="/s/search.png" height="23" width="23" alt="" />
                 </button>
             </div>
         </form>
@@ -95,26 +91,26 @@
 </div>
 
 
+
 </body>
 </html>
 <script>
 
-    var s = document.getElementById('sear');
-    document.body.onclick = function () {
-        if (s.className.indexOf('change') > -1) {
-            s.className = s.className.replace('change', '')
+    var s=document.getElementById('sear');
+    document.body.onclick=function(){
+        if(s.className.indexOf('change') > -1){
+            s.className=s.className.replace(' change','')
         }
-    };
-    s.onclick = function (event) {
-        var i = document.getElementById('sear');
-        if (i.className.indexOf('change') < 0) {
-            i.className += ' change';
+    }
+    s.onclick=function(event){
+        if(s.className.indexOf('change') < 0){
+            s.className+=' change';
         }
         stopPro(event);
-    };
-    function stopPro(evt) {
+    }
+    function stopPro(evt){
         var e = evt || window.event;
-        window.event ? e.cancelBubble = true : e.stopPropagation();
+        window.event?e.cancelBubble=true:e.stopPropagation();
     }
 
 
